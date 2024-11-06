@@ -1,37 +1,62 @@
 version: '3'
 
 services:
+    db:
+        image: mysql:5.7
+        container_name: db_container
+        environment:
+            MYSQL_DATABASE: test_rest_api
+            MYSQL_ROOT_PASSWORD: 123
+        security_opt:
+            - apparmor:unconfined
+        ports:
+            - "8101:3306"
+        restart: always
+        volumes:
+            - ./tmp/db:/var/lib/mysql
+        networks:
+            - internal
 
-  nginx:
-    image: nginx
-    volumes:
-      - ./:/var/www
-      - ./docker/nginx/conf.d/:/etc/nginx/conf.d
-    ports:
-      - "8876:80"
-    container_name: nginx-2
-    depends_on:
-      - app
-
-  app:
-    build:
-      context: .
-      dockerfile: docker/app/Dockerfile
-    volumes:
-      - ./:/var/www
-    container_name: app-2
-    depends_on:
-      - db
-    #command: bash -c "php artisan migrate && php artisan db:seed && php-fpm"
-
-  db:
-    image: mysql:5.7
-    environment:
-      MYSQL_DATABASE: test_rest_api
-      MYSQL_ROOT_PASSWORD: 123
-    ports:
-      - "8101:3306"
-    restart: always
-    volumes:
-      - ./tmp/db:/var/lib/mysql
-    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin_container
+        ports:
+            - "8080:80"
+        environment:
+            PMA_HOST: db
+            PMA_USER: root
+            PMA_PASSWORD: 123
+        links:
+            - db
+        restart: always
+        networks:
+            - internal
+    nginx:
+        image: nginx
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx/conf.d/:/etc/nginx/conf.d
+        ports:
+            - "8876:80"
+        container_name: nginx_container
+        depends_on:
+            - app
+        networks:
+            - internal
+    app:
+        build:
+            context: .
+            dockerfile: docker/app/Dockerfile
+        volumes:
+            - ./:/var/www
+        container_name: app_container
+        #        ports:
+        #            - "9000:9000"
+        depends_on:
+            - db
+        #command: sh -c "sleep 10 && composer install && php artisan migrate --seed --no-interaction"
+        networks:
+            - internal
+networks:
+    internal:
+        driver: bridge
