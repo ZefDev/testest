@@ -9,7 +9,7 @@ services:
       - ./docker/nginx/conf.d/:/etc/nginx/conf.d
     ports:
       - "8876:80"
-    container_name: nginx
+    container_name: nginx-2
     depends_on:
       - app
 
@@ -17,13 +17,13 @@ services:
     build:
       context: .
       dockerfile: docker/app/Dockerfile
-    volumes: 
+    volumes:
       - ./:/var/www
-    container_name: app
+    container_name: app-2
     depends_on:
       - db
-    command: bash -c "php artisan migrate && php artisan db:seed && php-fpm"
-  
+    #command: bash -c "php artisan migrate && php artisan db:seed && php-fpm"
+
   db:
     image: mysql:5.7
     environment:
@@ -32,6 +32,6 @@ services:
     ports:
       - "8101:3306"
     restart: always
-    volumes: 
+    volumes:
       - ./tmp/db:/var/lib/mysql
     command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
